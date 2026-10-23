@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Цитрус — Очередь Продавцов</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        citrus: {
+                            50: '#fff7ed',
+                            100: '#ffedd5',
+                            500: '#FF6B00',
+                            600: '#FF5000',
+                            700: '#E04800',
+                            bg: '#121212',
+                            card: '#1E1E1E',
+                            border: '#2A2A2A',
+                            accent: '#FF6B00'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #121212;
+            color: #E5E7EB;
+            font-family: 'Inter', sans-serif;
+            touch-action: manipulation;
+        }
+        .citrus-gradient {
+            background: linear-gradient(135deg, #FF6B00 0%, #FF3300 100%);
+        }
+        .citrus-glow {
+            box-shadow: 0 0 25px rgba(255, 107, 0, 0.3);
+        }
+        .card-glow {
+            box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.6);
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #121212;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2A2A2A;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #FF6B00;
+        }
+        @keyframes pulse-border {
+            0% { border-color: rgba(255, 107, 0, 0.4); }
+            50% { border-color: rgba(255, 107, 0, 0.9); }
+            100% { border-color: rgba(255, 107, 0, 0.4); }
+        }
+        .timer-active {
+            animation: pulse-border 2s infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between pb-12">
+
+    <!-- TOP HEADER -->
+    <header class="sticky top-0 z-30 bg-[#1A1A1A]/95 backdrop-blur-md border-b border-[#2A2A2A] px-4 py-3 shadow-md">
+        <div class="max-w-4xl mx-auto flex items-center justify-between">
+            <!-- Brand Logo -->
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl citrus-gradient flex items-center justify-center font-black text-white text-xl shadow-lg">
+                    Ц
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="font-extrabold text-lg tracking-wide text-white">ЦИТРУС</span>
+                        <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30">Очередь</span>
+                    </div>
+                    <p class="text-xs text-gray-400 flex items-center gap-1.5" id="syncStatus">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        Подключение...
+                    </p>
+                </div>
+            </div>
+
+            <!-- Quick Info & Staff Settings -->
+            <div class="flex items-center gap-2">
+                <div class="flex items-center text-xs bg-[#242424] rounded-xl px-3 py-1.5 border border-[#333333]">
+                    <span class="text-gray-400 mr-1.5">На смене:</span>
+                    <strong class="text-orange-400 font-bold text-sm" id="activeShiftCount">0</strong>
+                </div>
+                <button onclick="switchTab('staff')" class="bg-[#242424] hover:bg-[#2E2E2E] active:scale-95 text-gray-200 text-xs px-3 py-2 rounded-xl font-medium transition flex items-center gap-1.5 border border-[#333333]">
+                    <i class="fa-solid fa-user-gear text-orange-500"></i>
+                    <span class="hidden sm:inline">Смена</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="max-w-4xl mx-auto w-full px-3 sm:px-4 pt-4 flex-1">
+
+        <!-- TAB NAVIGATION -->
+        <nav class="flex bg-[#1E1E1E] p-1.5 rounded-2xl mb-4 border border-[#2A2A2A] text-xs sm:text-sm font-medium shadow-inner">
+            <button onclick="switchTab('queue')" id="tab-queue" class="flex-1 py-2.5 rounded-xl text-center font-bold transition flex items-center justify-center gap-2 bg-citrus-500 text-white shadow-md">
+                <i class="fa-solid fa-users"></i>
+                <span>Очередь</span>
+            </button>
+            <button onclick="switchTab('bookings')" id="tab-bookings" class="flex-1 py-2.5 rounded-xl text-center font-bold text-gray-400 hover:text-white transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-bookmark"></i>
+                <span>Брони</span>
+                <span id="bookingBadge" class="hidden bg-orange-500 text-white text-[10px] px-1.5 py-0.2 rounded-full font-bold">0</span>
+            </button>
+            <button onclick="switchTab('history')" id="tab-history" class="flex-1 py-2.5 rounded-xl text-center font-bold text-gray-400 hover:text-white transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <span>История</span>
+            </button>
+            <button onclick="switchTab('staff')" id="tab-staff" class="flex-1 py-2.5 rounded-xl text-center font-bold text-gray-400 hover:text-white transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-sliders"></i>
+                <span>Состав</span>
+            </button>
+        </nav>
+
+        <!-- VIEW 1: QUEUE TAB -->
+        <section id="view-queue" class="space-y-4">
+            
+            <!-- CURRENT TURN SPOTLIGHT CARD -->
+            <div id="currentSpotlight" class="relative bg-gradient-to-br from-[#1E1E1E] via-[#222222] to-[#1A1A1A] border-2 border-orange-500/70 rounded-2xl p-4 sm:p-5 shadow-xl overflow-hidden card-glow">
+                <!-- Glowing ambient background -->
+                <div class="absolute -right-8 -top-8 w-36 h-36 bg-orange-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                
+                <div class="flex items-center justify-between mb-3 border-b border-[#2A2A2A] pb-3">
+                    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/20 text-orange-400 font-bold text-xs uppercase tracking-wider border border-orange-500/30">
+                        <span class="w-2 h-2 rounded-full bg-orange-500 animate-ping"></span>
+                        Сейчас принимает
+                    </span>
+                    <span class="text-xs text-gray-400 font-medium" id="spotlightPos">Позиция №1</span>
+                </div>
+
+                <!-- Active Employee Spotlight -->
+                <div id="spotlightEmployeeContainer">
+                    <div class="text-center py-6 text-gray-400">
+                        <i class="fa-solid fa-spinner fa-spin text-2xl text-orange-500 mb-2"></i>
+                        <p class="text-sm">Загрузка очереди продавцов...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- REST OF QUEUE LIST -->
+            <div class="space-y-2">
+                <div class="flex items-center justify-between px-1 text-xs text-gray-400 font-semibold uppercase tracking-wider">
+                    <span>Следующие в очереди</span>
+                    <span class="text-gray-500 text-[11px] font-normal">Порядок перемещения</span>
+                </div>
+
+                <div id="queueList" class="space-y-2">
+                    <!-- Dynamic queue items go here -->
+                </div>
+            </div>
+
+            <!-- EMPTY QUEUE NOTICE -->
+            <div id="emptyQueueNotice" class="hidden text-center py-10 bg-[#1E1E1E] rounded-2xl border border-dashed border-[#333333] p-6">
+                <i class="fa-solid fa-users-slash text-4xl text-gray-600 mb-3"></i>
+                <h3 class="text-base font-bold text-gray-300">В очереди нет активных продавцов</h3>
+                <p class="text-xs text-gray-500 mb-4 max-w-sm mx-auto">Откройте вкладку "Состав" и отметьте, кто сегодня работает на смене.</p>
+                <div class="flex justify-center gap-2">
+                    <button onclick="switchTab('staff')" class="bg-citrus-500 hover:bg-orange-600 text-white text-xs px-4 py-2.5 rounded-xl font-bold transition flex items-center gap-2 shadow-lg">
+                        <i class="fa-solid fa-user-check"></i>
+                        Выбрать состав смены
+                    </button>
+                    <button onclick="resetDefaultTeam()" class="bg-[#2A2A2A] hover:bg-[#333333] text-gray-300 text-xs px-4 py-2.5 rounded-xl font-bold transition">
+                        Восстановить список
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW 2: BOOKINGS TAB -->
+        <section id="view-bookings" class="hidden space-y-4">
+            <div class="flex items-center justify-between bg-[#1E1E1E] p-3.5 rounded-2xl border border-[#2A2A2A]">
+                <div>
+                    <h2 class="text-sm font-bold text-white">Бронирования клиентов</h2>
+                    <p class="text-xs text-gray-400">Предварительные записи клиентов на покупку или выдачу</p>
+                </div>
+                <button onclick="openBookingModal()" class="bg-citrus-500 hover:bg-orange-600 text-white text-xs px-3.5 py-2.5 rounded-xl font-bold transition flex items-center gap-1.5 shadow">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Новая бронь</span>
+                </button>
+            </div>
+
+            <div id="bookingsList" class="space-y-2.5">
+                <!-- Bookings loaded here -->
+            </div>
+        </section>
+
+        <!-- VIEW 3: HISTORY LOG TAB -->
+        <section id="view-history" class="hidden space-y-4">
+            <div class="flex items-center justify-between bg-[#1E1E1E] p-3.5 rounded-2xl border border-[#2A2A2A]">
+                <div>
+                    <h2 class="text-sm font-bold text-white">История событий смены</h2>
+                    <p class="text-xs text-gray-400">Фиксация продаж, долгих консультаций и броней</p>
+                </div>
+                <button onclick="clearHistoryLogs()" class="text-gray-400 hover:text-red-400 text-xs px-2.5 py-1.5 rounded-xl border border-[#333333] hover:border-red-900/50 transition">
+                    Очистить
+                </button>
+            </div>
+
+            <!-- Filter chips -->
+            <div class="flex gap-1.5 overflow-x-auto pb-1 text-xs">
+                <button onclick="filterLogs('all')" class="log-filter-btn px-3 py-1.5 rounded-xl bg-orange-500 text-white font-semibold whitespace-nowrap" data-filter="all">Все события</button>
+                <button onclick="filterLogs('sale')" class="log-filter-btn px-3 py-1.5 rounded-xl bg-[#242424] text-gray-400 font-medium hover:text-white whitespace-nowrap" data-filter="sale">🛒 Продажи</button>
+                <button onclick="filterLogs('consultation')" class="log-filter-btn px-3 py-1.5 rounded-xl bg-[#242424] text-gray-400 font-medium hover:text-white whitespace-nowrap" data-filter="consultation">🗣️ Консультации</button>
+                <button onclick="filterLogs('booking')" class="log-filter-btn px-3 py-1.5 rounded-xl bg-[#242424] text-gray-400 font-medium hover:text-white whitespace-nowrap" data-filter="booking">📌 Брони</button>
+            </div>
+
+            <div id="historyLogsList" class="space-y-2 relative before:absolute before:left-4 before:top-2 before:bottom-2 before:w-0.5 before:bg-[#2A2A2A]">
+                <!-- History logs here -->
+            </div>
+        </section>
+
+        <!-- VIEW 4: STAFF MANAGEMENT TAB -->
+        <section id="view-staff" class="hidden space-y-4">
+            <div class="flex items-center justify-between bg-[#1E1E1E] p-3.5 rounded-2xl border border-[#2A2A2A]">
+                <div>
+                    <h2 class="text-sm font-bold text-white">Состав смены магазина</h2>
+                    <p class="text-xs text-gray-400">Каждый сотрудник строго уникален. Переключайте тех, кто на смене</p>
+                </div>
+                <button onclick="openAddStaffModal()" class="bg-[#2A2A2A] hover:bg-[#333333] text-gray-200 text-xs px-3 py-2 rounded-xl font-medium transition border border-[#3A3A3A] flex items-center gap-1.5">
+                    <i class="fa-solid fa-user-plus text-orange-400"></i>
+                    <span>Новый сотрудник</span>
+                </button>
+            </div>
+
+            <!-- Section 1: Standard Sellers -->
+            <div class="space-y-2">
+                <div class="text-xs font-bold text-orange-400 uppercase tracking-wider px-1">Продавцы (Основная смена)</div>
+                <div id="staffGridSellers" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <!-- Standard sellers cards -->
+                </div>
+            </div>
+
+            <!-- Section 2: Management & Cashier -->
+            <div class="space-y-2 pt-2">
+                <div class="text-xs font-bold text-gray-400 uppercase tracking-wider px-1">Руководство & Касса (Вне очереди)</div>
+                <div id="staffGridManagement" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <!-- Admin, Director, Cashier cards -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODAL 1: SALE LOG -->
+    <div id="modalSale" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-[#1E1E1E] border border-[#2A2A2A] rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-[#2A2A2A] pb-3">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <span class="p-2 rounded-xl bg-emerald-500/20 text-emerald-400">🛒</span>
+                    Фиксация продажи
+                </h3>
+                <button onclick="closeModal('modalSale')" class="text-gray-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <p class="text-xs text-orange-400 font-bold" id="saleConsultantName">Продавец: --</p>
+
+            <form id="saleForm" onsubmit="submitSale(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1">Товар или категория</label>
+                    <input type="text" id="saleProduct" placeholder="Например: iPhone 16 Pro, Dyson, Планшет" class="w-full bg-[#121212] border border-[#333333] rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500 transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1">Сумма чека (грн, необязательно)</label>
+                    <input type="number" id="saleAmount" placeholder="Например: 45000" class="w-full bg-[#121212] border border-[#333333] rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500 transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1">Заметка / Допы</label>
+                    <input type="text" id="saleNote" placeholder="Гарантия Цитрус Защита, аксессуары" class="w-full bg-[#121212] border border-[#333333] rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500 transition">
+                </div>
+
+                <div class="pt-2 flex gap-2">
+                    <button type="button" onclick="closeModal('modalSale')" class="flex-1 bg-[#2A2A2A] text-gray-300 py-2.5 rounded-xl font-medium text-xs hover:bg-[#333333] transition">Отмена</button>
+                    <button type="submit" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-xl font-bold text-xs transition shadow-lg flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-check"></i>
+                        Провел (В конец очереди)
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: CLIENT BOOKING -->
+    <div id="modalBooking" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-[#1E1E1E] border border-[#2A2A2A] rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-[#2A2A2A] pb-3">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <span class="p-2 rounded-xl bg-orange-500/20 text-orange-400">📌</span>
+                    Новая бронь клиента
+                </h3>
+                <button onclick="closeModal('modalBooking')" class="text-gray-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="bookingForm" onsubmit="submitBooking(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1">Имя клиента *</label>
+                    <input type="text" id="bookingClientName" required placeholder="Максим" class="w-full bg-[#121212] border border-[#333333] rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500 transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1">Телефон клиента / Примечание</label>
+                    <input type="text" id="bookingClientPhone" placeholder="+380... или 'Приедет через час'" class="w-full bg-[#121212] border border-[#333333] rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500 transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1">Товар / Цель визита</label>
+                    <input type="text" id="bookingProduct" placeholder="MacBook Air M3, Консультация TV" class="w-full bg-[#121212] border border-[#333333] rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500 transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1">Закрепленный продавец</label>
+                    <select id="bookingConsultantSelect" class="w-full bg-[#121212] border border-[#333333] rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500 transition">
+                        <!-- Dynamic options -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1">Время / Ожидание</label>
+                    <input type="text" id="bookingTime" placeholder="Около 15:00" class="w-full bg-[#121212] border border-[#333333] rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500 transition">
+                </div>
+
+                <div class="pt-2 flex gap-2">
+                    <button type="button" onclick="closeModal('modalBooking')" class="flex-1 bg-[#2A2A2A] text-gray-300 py-2.5 rounded-xl font-medium text-xs hover:bg-[#333333] transition">Отмена</button>
+                    <button type="submit" class="flex-1 bg-citrus-500 hover:bg-orange-600 text-white py-2.5 rounded-xl font-bold text-xs transition shadow-lg">
+                        Забронировать
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 3: ADD STAFF -->
+    <div id="modalAddStaff" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="bg-[#1E1E1E] border border-[#2A2A2A] rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-[#2A2A2A] pb-3">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-user-plus text-orange-500"></i>
+                    Добавить сотрудника
+                </h3>
+                <button onclick="closeModal('modalAddStaff')" class="text-gray-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="addStaffForm" onsubmit="submitAddStaff(event)" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1">Имя * (должно быть уникальным)</label>
+                    <input type="text" id="staffName" required placeholder="Например: Олег" class="w-full bg-[#121212] border border-[#333333] rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500 transition">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1">Должность / Категория</label>
+                    <select id="staffCategory" class="w-full bg-[#121212] border border-[#333333] rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500 transition">
+                        <option value="seller">Продавец (Основная смена)</option>
+                        <option value="management">Руководство / Касса</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1">Роль / Специализация</label>
+                    <input type="text" id="staffRole" placeholder="Продавец-консультант" class="w-full bg-[#121212] border border-[#333333] rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500 transition">
+                </div>
+
+                <div class="pt-2 flex gap-2">
+                    <button type="button" onclick="closeModal('modalAddStaff')" class="flex-1 bg-[#2A2A2A] text-gray-300 py-2.5 rounded-xl font-medium text-xs hover:bg-[#333333] transition">Отмена</button>
+                    <button type="submit" class="flex-1 bg-citrus-500 hover:bg-orange-600 text-white py-2.5 rounded-xl font-bold text-xs transition shadow-lg">
+                        Сохранить
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- FIREBASE REALTIME MODULES -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            collection, 
+            doc, 
+            setDoc, 
+            getDocs, 
+            addDoc, 
+            updateDoc, 
+            deleteDoc, 
+            onSnapshot 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global app configuration
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'citrus-queue-app';
+        let db = null;
+        let auth = null;
+        let currentUser = null;
+        let isFirebaseActive = false;
+
+        // Citrus Staff Defaults (Strict 8 Unique Members)
+        const DEFAULT_CITRUS_TEAM = [
+            // Standard Sellers (Active by default: 5 sellers)
+            { name: "Тихон", role: "Продавец-консультант", category: "seller", onShift: true, status: "idle", order: 1, salesCount: 0, consultStartTime: null },
+            { name: "Данил", role: "Продавец-консультант", category: "seller", onShift: true, status: "idle", order: 2, salesCount: 0, consultStartTime: null },
+            { name: "Диана", role: "Продавец-консультант", category: "seller", onShift: true, status: "idle", order: 3, salesCount: 0, consultStartTime: null },
+            { name: "Юля", role: "Продавец-консультант", category: "seller", onShift: true, status: "idle", order: 4, salesCount: 0, consultStartTime: null },
+            { name: "Дима", role: "Продавец-консультант", category: "seller", onShift: true, status: "idle", order: 5, salesCount: 0, consultStartTime: null },
+            
+            // Management & Cashier (Off Shift by default: 3 members)
+            { name: "Виталя", role: "Администратор", category: "management", onShift: false, status: "idle", order: 6, salesCount: 0, consultStartTime: null },
+            { name: "Андрей", role: "Директор", category: "management", onShift: false, status: "idle", order: 7, salesCount: 0, consultStartTime: null },
+            { name: "Вика", role: "Кассир", category: "management", onShift: false, status: "idle", order: 8, salesCount: 0, consultStartTime: null }
+        ];
+
+        // Global app state
+        window.appState = {
+            staff: [],
+            bookings: [],
+            logs: [],
+            currentActiveTab: 'queue',
+            logFilter: 'all',
+            activeSaleStaffId: null
+        };
+
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+
+        // Deduplicate Staff Array by Name (Strict Uniqueness Guard)
+        function deduplicateStaff(list) {
+            const seenNames = new Set();
+            const uniqueList = [];
+
+            for (const member of list) {
+                const normName = (member.name || '').trim().toLowerCase();
+                if (normName && !seenNames.has(normName)) {
+                    seenNames.add(normName);
+                    uniqueList.push(member);
+                }
+            }
+            return uniqueList;
+        }
+
+        // Initialize Firebase & Fallbacks
+        async function initApp() {
+            if (firebaseConfig) {
+                try {
+                    const app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    auth = getAuth(app);
+
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        const userCred = await signInWithCustomToken(auth, __initial_auth_token);
+                        currentUser = userCred.user;
+                    } else {
+                        const userCred = await signInAnonymously(auth);
+                        currentUser = userCred.user;
+                    }
+
+                    isFirebaseActive = true;
+                    updateSyncBadge(true, "Firebase Live Sync");
+                    setupFirestoreListeners();
+                } catch (err) {
+                    console.warn("Firebase fallback mode activated:", err);
+                    setupLocalFallback();
+                }
+            } else {
+                setupLocalFallback();
+            }
+
+            startTimerLoop();
+        }
+
+        // Firestore Listeners
+        function setupFirestoreListeners() {
+            if (!db || !currentUser) return;
+
+            const staffRef = collection(db, 'artifacts', appId, 'public', 'data', 'staff');
+            const bookingsRef = collection(db, 'artifacts', appId, 'public', 'data', 'bookings');
+            const logsRef = collection(db, 'artifacts', appId, 'public', 'data', 'logs');
+
+            // 1. Staff Listener with Strict Deduplication
+            onSnapshot(staffRef, (snapshot) => {
+                const rawList = [];
+                snapshot.forEach(docSnap => {
+                    rawList.push({ id: docSnap.id, ...docSnap.data() });
+                });
+
+                if (rawList.length === 0) {
+                    seedDefaultTeamFirebase();
+                } else {
+                    const cleanList = deduplicateStaff(rawList);
+                    cleanList.sort((a, b) => (a.order || 0) - (b.order || 0));
+                    window.appState.staff = cleanList;
+                    renderAllViews();
+                }
+            }, (err) => console.error("Staff snapshot error:", err));
+
+            // 2. Bookings Listener
+            onSnapshot(bookingsRef, (snapshot) => {
+                const list = [];
+                snapshot.forEach(docSnap => {
+                    list.push({ id: docSnap.id, ...docSnap.data() });
+                });
+                list.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                window.appState.bookings = list;
+                renderBookingsView();
+                updateBookingBadge();
+            }, (err) => console.error("Bookings snapshot error:", err));
+
+            // 3. Logs Listener
+            onSnapshot(logsRef, (snapshot) => {
+                const list = [];
+                snapshot.forEach(docSnap => {
+                    list.push({ id: docSnap.id, ...docSnap.data() });
+                });
+                list.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                window.appState.logs = list;
+                renderLogsView();
+            }, (err) => console.error("Logs snapshot error:", err));
+        }
+
+        // Offline / LocalStorage mode
+        function setupLocalFallback() {
+            isFirebaseActive = false;
+            updateSyncBadge(false, "Локальный режим");
+
+            const savedStaff = localStorage.getItem('citrus_staff_v3');
+            const savedBookings = localStorage.getItem('citrus_bookings_v3');
+            const savedLogs = localStorage.getItem('citrus_logs_v3');
+
+            if (savedStaff) {
+                const parsed = JSON.parse(savedStaff);
+                window.appState.staff = deduplicateStaff(parsed);
+            } else {
+                seedDefaultTeamLocal();
+            }
+
+            if (savedBookings) window.appState.bookings = JSON.parse(savedBookings);
+            if (savedLogs) window.appState.logs = JSON.parse(savedLogs);
+
+            renderAllViews();
+        }
+
+        function updateSyncBadge(online, text) {
+            const badge = document.getElementById('syncStatus');
+            if (!badge) return;
+            if (online) {
+                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> ${text}`;
+                badge.className = "text-xs text-emerald-400 flex items-center gap-1.5 font-medium";
+            } else {
+                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500"></span> ${text}`;
+                badge.className = "text-xs text-amber-400 flex items-center gap-1.5 font-medium";
+            }
+        }
+
+        // --- TEAM SEEDING & ACTIONS --- //
+
+        async function seedDefaultTeamFirebase() {
+            const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'staff');
+            
+            // Delete any existing items first to guarantee no duplicates
+            const existingSnap = await getDocs(colRef);
+            for (const d of existingSnap.docs) {
+                await deleteDoc(d.ref);
+            }
+
+            for (const member of DEFAULT_CITRUS_TEAM) {
+                await addDoc(colRef, member);
+            }
+        }
+
+        function seedDefaultTeamLocal() {
+            window.appState.staff = DEFAULT_CITRUS_TEAM.map((m, idx) => ({
+                id: (idx + 1).toString(),
+                ...m
+            }));
+            saveLocalState();
+            renderAllViews();
+        }
+
+        window.resetDefaultTeam = async function() {
+            if (isFirebaseActive && db) {
+                await seedDefaultTeamFirebase();
+            } else {
+                seedDefaultTeamLocal();
+            }
+            showToast("Список команды сброшен до 8 уникальных сотрудников", "info");
+        };
+
+        function saveLocalState() {
+            if (!isFirebaseActive) {
+                localStorage.setItem('citrus_staff_v3', JSON.stringify(window.appState.staff));
+                localStorage.setItem('citrus_bookings_v3', JSON.stringify(window.appState.bookings));
+                localStorage.setItem('citrus_logs_v3', JSON.stringify(window.appState.logs));
+            }
+        }
+
+        // Rotate seller to the back of the queue
+        window.rotateToBack = async function(staffId) {
+            const staffList = window.appState.staff;
+            const target = staffList.find(s => s.id === staffId);
+            if (!target) return;
+
+            const maxOrder = staffList.reduce((max, s) => Math.max(max, s.order || 0), 0);
+            const newOrder = maxOrder + 1;
+
+            if (isFirebaseActive && db) {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'staff', staffId);
+                await updateDoc(docRef, {
+                    order: newOrder,
+                    status: 'idle',
+                    consultStartTime: null
+                });
+            } else {
+                target.order = newOrder;
+                target.status = 'idle';
+                target.consultStartTime = null;
+                saveLocalState();
+                renderAllViews();
+            }
+        };
+
+        // Toggle Long Consultation Mode
+        window.toggleConsultation = async function(staffId) {
+            const target = window.appState.staff.find(s => s.id === staffId);
+            if (!target) return;
+
+            if (target.status === 'consulting') {
+                await addLogEvent('consultation', `${target.name} завершил(а) долгую консультацию`, target.name);
+                await rotateToBack(staffId);
+                showToast(`Консультация завершена. ${target.name} смещен(а) в конец очереди.`);
+            } else {
+                const now = Date.now();
+                if (isFirebaseActive && db) {
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'staff', staffId);
+                    await updateDoc(docRef, {
+                        status: 'consulting',
+                        consultStartTime: now
+                    });
+                } else {
+                    target.status = 'consulting';
+                    target.consultStartTime = now;
+                    saveLocalState();
+                    renderAllViews();
+                }
+                await addLogEvent('consultation', `${target.name} начал(а) долгую консультацию`, target.name);
+                showToast(`${target.name}: включен таймер долгой консультации`);
+            }
+        };
+
+        // Toggle AFK / Break
+        window.toggleBreak = async function(staffId) {
+            const target = window.appState.staff.find(s => s.id === staffId);
+            if (!target) return;
+
+            const isBreak = target.status === 'break';
+            const newStatus = isBreak ? 'idle' : 'break';
+
+            if (isFirebaseActive && db) {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'staff', staffId);
+                await updateDoc(docRef, {
+                    status: newStatus,
+                    consultStartTime: null
+                });
+            } else {
+                target.status = newStatus;
+                target.consultStartTime = null;
+                saveLocalState();
+                renderAllViews();
+            }
+
+            const txt = isBreak ? 'вернулся(лась) в очередь' : 'отошел(шла) / на перерыве';
+            await addLogEvent('break', `${target.name} ${txt}`, target.name);
+            showToast(`${target.name} ${txt}`);
+        };
+
+        // Toggle Shift Active status
+        window.toggleShift = async function(staffId) {
+            const target = window.appState.staff.find(s => s.id === staffId);
+            if (!target) return;
+
+            const newShift = !target.onShift;
+
+            if (isFirebaseActive && db) {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'staff', staffId);
+                await updateDoc(docRef, {
+                    onShift: newShift,
+                    status: 'idle'
+                });
+            } else {
+                target.onShift = newShift;
+                target.status = 'idle';
+                saveLocalState();
+                renderAllViews();
+            }
+
+            const txt = newShift ? 'вышел(шла) на смену' : 'снят(а) со смены';
+            await addLogEvent('shift', `${target.name} ${txt}`, target.name);
+            showToast(`${target.name} ${txt}`);
+        };
+
+        // Move seller manually in active queue
+        window.moveInQueue = async function(staffId, direction) {
+            const activeQueue = window.appState.staff
+                .filter(s => s.onShift)
+                .sort((a, b) => (a.order || 0) - (b.order || 0));
+
+            const idx = activeQueue.findIndex(s => s.id === staffId);
+            if (idx === -1) return;
+
+            const targetIdx = idx + direction;
+            if (targetIdx < 0 || targetIdx >= activeQueue.length) return;
+
+            const itemA = activeQueue[idx];
+            const itemB = activeQueue[targetIdx];
+
+            const tempOrder = itemA.order || 1;
+            itemA.order = itemB.order || 2;
+            itemB.order = tempOrder;
+
+            if (isFirebaseActive && db) {
+                const docA = doc(db, 'artifacts', appId, 'public', 'data', 'staff', itemA.id);
+                const docB = doc(db, 'artifacts', appId, 'public', 'data', 'staff', itemB.id);
+                await updateDoc(docA, { order: itemA.order });
+                await updateDoc(docB, { order: itemB.order });
+            } else {
+                saveLocalState();
+                renderAllViews();
+            }
+        };
+
+        // Add event to history log
+        async function addLogEvent(type, text, author) {
+            const newLog = {
+                type,
+                text,
+                author: author || 'Система',
+                timestamp: Date.now(),
+                timeStr: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            };
+
+            if (isFirebaseActive && db) {
+                const logsRef = collection(db, 'artifacts', appId, 'public', 'data', 'logs');
+                await addDoc(logsRef, newLog);
+            } else {
+                window.appState.logs.unshift({ id: Date.now().toString(), ...newLog });
+                saveLocalState();
+                renderLogsView();
+            }
+        }
+
+        // --- SALE SUBMISSION --- //
+        window.openSaleModal = function(staffId) {
+            const staff = window.appState.staff.find(s => s.id === staffId);
+            if (!staff) return;
+            window.appState.activeSaleStaffId = staffId;
+            document.getElementById('saleConsultantName').innerText = `Продавец: ${staff.name}`;
+            document.getElementById('saleForm').reset();
+            document.getElementById('modalSale').classList.remove('hidden');
+        };
+
+        window.submitSale = async function(e) {
+            e.preventDefault();
+            const staffId = window.appState.activeSaleStaffId;
+            const staff = window.appState.staff.find(s => s.id === staffId);
+            if (!staff) return;
+
+            const product = document.getElementById('saleProduct').value.trim();
+            const amount = document.getElementById('saleAmount').value.trim();
+            const note = document.getElementById('saleNote').value.trim();
+
+            let logText = `${staff.name}: Продажа`;
+            if (product) logText += ` (${product})`;
+            if (amount) logText += ` на ${amount} грн`;
+            if (note) logText += `. [${note}]`;
+
+            const newSalesCount = (staff.salesCount || 0) + 1;
+
+            if (isFirebaseActive && db) {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'staff', staffId);
+                await updateDoc(docRef, { salesCount: newSalesCount });
+            } else {
+                staff.salesCount = newSalesCount;
+            }
+
+            await addLogEvent('sale', logText, staff.name);
+            closeModal('modalSale');
+            await rotateToBack(staffId);
+            showToast(`Продажа зафиксирована! ${staff.name} уходит в конец очереди.`);
+        };
+
+        // --- BOOKINGS SUBMISSION --- //
+        window.openBookingModal = function() {
+            const select = document.getElementById('bookingConsultantSelect');
+            select.innerHTML = '<option value="Любой свободен">-- Без назначения (Любой свободен) --</option>';
+            
+            window.appState.staff.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.name;
+                opt.textContent = `${s.name} (${s.role})`;
+                select.appendChild(opt);
+            });
+
+            document.getElementById('bookingForm').reset();
+            document.getElementById('modalBooking').classList.remove('hidden');
+        };
+
+        window.submitBooking = async function(e) {
+            e.preventDefault();
+            const clientName = document.getElementById('bookingClientName').value.trim();
+            const phone = document.getElementById('bookingClientPhone').value.trim();
+            const product = document.getElementById('bookingProduct').value.trim();
+            const consultant = document.getElementById('bookingConsultantSelect').value;
+            const time = document.getElementById('bookingTime').value.trim();
+
+            const newBooking = {
+                clientName,
+                phone: phone || 'Телефон не указан',
+                product: product || 'Консультация по технике',
+                consultant: consultant || 'Любой свободен',
+                time: time || 'В ближайшее время',
+                status: 'pending',
+                timestamp: Date.now()
+            };
+
+            if (isFirebaseActive && db) {
+                const bookingsRef = collection(db, 'artifacts', appId, 'public', 'data', 'bookings');
+                await addDoc(bookingsRef, newBooking);
+            } else {
+                window.appState.bookings.unshift({ id: Date.now().toString(), ...newBooking });
+                saveLocalState();
+                renderBookingsView();
+                updateBookingBadge();
+            }
+
+            await addLogEvent('booking', `Бронь: ${clientName} — ${product} (Продавец: ${consultant})`, 'Клиент');
+            closeModal('modalBooking');
+            showToast("Бронь клиента добавлена!");
+        };
+
+        window.updateBookingStatus = async function(bookingId, status) {
+            if (isFirebaseActive && db) {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'bookings', bookingId);
+                await updateDoc(docRef, { status });
+            } else {
+                const b = window.appState.bookings.find(x => x.id === bookingId);
+                if (b) b.status = status;
+                saveLocalState();
+                renderBookingsView();
+            }
+            showToast(status === 'completed' ? "Бронь отмечена как Обслужена" : "Бронь отменена");
+        };
+
+        window.deleteBooking = async function(bookingId) {
+            if (isFirebaseActive && db) {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'bookings', bookingId);
+                await deleteDoc(docRef);
+            } else {
+                window.appState.bookings = window.appState.bookings.filter(x => x.id !== bookingId);
+                saveLocalState();
+                renderBookingsView();
+                updateBookingBadge();
+            }
+            showToast("Бронь удалена");
+        };
+
+        // --- STAFF ADDITION WITH DUP VALIDATION --- //
+        window.openAddStaffModal = function() {
+            document.getElementById('addStaffForm').reset();
+            document.getElementById('modalAddStaff').classList.remove('hidden');
+        };
+
+        window.submitAddStaff = async function(e) {
+            e.preventDefault();
+            const name = document.getElementById('staffName').value.trim();
+            const category = document.getElementById('staffCategory').value;
+            const role = document.getElementById('staffRole').value.trim() || 'Продавец-консультант';
+
+            if (!name) return;
+
+            // STRICT DUP CHECK (case-insensitive, trimmed)
+            const normalizedNewName = name.toLowerCase();
+            const exists = window.appState.staff.some(s => (s.name || '').trim().toLowerCase() === normalizedNewName);
+
+            if (exists) {
+                showToast(`⚠️ Сотрудник с именем "${name}" уже есть в списке!`, 'error');
+                return;
+            }
+
+            const maxOrder = window.appState.staff.reduce((max, s) => Math.max(max, s.order || 0), 0);
+
+            const newStaff = {
+                name,
+                role,
+                category,
+                onShift: true,
+                status: 'idle',
+                order: maxOrder + 1,
+                salesCount: 0,
+                consultStartTime: null
+            };
+
+            if (isFirebaseActive && db) {
+                const staffRef = collection(db, 'artifacts', appId, 'public', 'data', 'staff');
+                await addDoc(staffRef, newStaff);
+            } else {
+                window.appState.staff.push({ id: Date.now().toString(), ...newStaff });
+                saveLocalState();
+                renderAllViews();
+            }
+
+            await addLogEvent('staff', `Добавлен сотрудник: ${name} (${role})`, 'Настройки');
+            closeModal('modalAddStaff');
+            showToast(`${name} добавлен(а) в команду`);
+        };
+
+        window.deleteStaff = async function(staffId) {
+            const staff = window.appState.staff.find(s => s.id === staffId);
+            if (!staff) return;
+
+            if (isFirebaseActive && db) {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'staff', staffId);
+                await deleteDoc(docRef);
+            } else {
+                window.appState.staff = window.appState.staff.filter(s => s.id !== staffId);
+                saveLocalState();
+                renderAllViews();
+            }
+            showToast(`${staff.name} удален(а) из списка`);
+        };
+
+        // --- RENDER FUNCTIONS --- //
+
+        function renderAllViews() {
+            renderQueueView();
+            renderBookingsView();
+            renderLogsView();
+            renderStaffView();
+            updateShiftCount();
+        }
+
+        // 1. Render Active Queue View
+        function renderQueueView() {
+            const spotlightContainer = document.getElementById('spotlightEmployeeContainer');
+            const queueList = document.getElementById('queueList');
+            const emptyNotice = document.getElementById('emptyQueueNotice');
+
+            // Get active employees on shift
+            const activeOnShift = window.appState.staff
+                .filter(s => s.onShift)
+                .sort((a, b) => (a.order || 0) - (b.order || 0));
+
+            if (activeOnShift.length === 0) {
+                spotlightContainer.innerHTML = '';
+                queueList.innerHTML = '';
+                emptyNotice.classList.remove('hidden');
+                return;
+            } else {
+                emptyNotice.classList.add('hidden');
+            }
+
+            // Find current active spotlight seller
+            let spotlightIndex = activeOnShift.findIndex(s => s.status !== 'break');
+            if (spotlightIndex === -1) spotlightIndex = 0; // If all on break, pick first
+
+            const current = activeOnShift[spotlightIndex];
+            const isConsulting = current.status === 'consulting';
+            const isBreak = current.status === 'break';
+
+            // Render Current Spotlight Card (#1 in Queue)
+            spotlightContainer.innerHTML = `
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div class="flex items-center gap-3.5">
+                        <div class="relative">
+                            <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-orange-600 to-amber-500 flex items-center justify-center text-white font-extrabold text-xl shadow-lg">
+                                ${current.name.substring(0, 2).toUpperCase()}
+                            </div>
+                            ${isConsulting ? '<span class="absolute -top-1 -right-1 flex h-4 w-4"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span><span class="relative inline-flex rounded-full h-4 w-4 bg-orange-500"></span></span>' : ''}
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-black text-white flex items-center gap-2">
+                                ${current.name}
+                                ${isBreak ? '<span class="text-xs font-normal text-amber-400 bg-amber-500/20 px-2 py-0.5 rounded-full border border-amber-500/30">Перерыв</span>' : ''}
+                            </h2>
+                            <p class="text-xs text-gray-400 font-medium">${current.role}</p>
+                            
+                            ${isConsulting ? `
+                                <div class="mt-1.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-orange-500/20 border border-orange-500/40 text-orange-400 font-mono text-xs font-bold timer-active">
+                                    <i class="fa-solid fa-stopwatch animate-spin"></i>
+                                    <span>Таймер: </span>
+                                    <span id="consultTimerDisplay" data-start="${current.consultStartTime || Date.now()}">00:00</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+
+                    <div class="bg-[#121212] px-3.5 py-2 rounded-xl border border-[#2A2A2A] flex items-center gap-3 text-xs">
+                        <div>
+                            <span class="text-gray-400 block text-[10px] uppercase font-semibold">Продаж сегодня</span>
+                            <span class="text-emerald-400 font-extrabold text-base">${current.salesCount || 0}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SPOTLIGHT ACTION BUTTONS -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4 pt-3.5 border-t border-[#2A2A2A]">
+                    <button onclick="openSaleModal('${current.id}')" class="bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white py-2.5 px-3 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shadow-lg">
+                        <i class="fa-solid fa-cart-shopping"></i>
+                        <span>Продал</span>
+                    </button>
+
+                    <button onclick="toggleConsultation('${current.id}')" class="${isConsulting ? 'bg-amber-600 hover:bg-amber-500' : 'bg-citrus-500 hover:bg-orange-600'} active:scale-95 text-white py-2.5 px-3 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shadow-lg">
+                        <i class="fa-solid ${isConsulting ? 'fa-check' : 'fa-headset'}"></i>
+                        <span>${isConsulting ? 'Завершить' : 'Консультация'}</span>
+                    </button>
+
+                    <button onclick="openBookingModal()" class="bg-[#2A2A2A] hover:bg-[#333333] active:scale-95 text-gray-200 py-2.5 px-3 rounded-xl font-semibold text-xs transition flex items-center justify-center gap-2 border border-[#3A3A3A]">
+                        <i class="fa-solid fa-bookmark text-orange-400"></i>
+                        <span>Бронь</span>
+                    </button>
+
+                    <button onclick="toggleBreak('${current.id}')" class="bg-[#2A2A2A] hover:bg-[#333333] active:scale-95 text-gray-300 py-2.5 px-3 rounded-xl font-semibold text-xs transition flex items-center justify-center gap-2 border border-[#3A3A3A]">
+                        <i class="fa-solid ${isBreak ? 'fa-play text-emerald-400' : 'fa-pause text-amber-400'}"></i>
+                        <span>${isBreak ? 'В очередь' : 'Пауза'}</span>
+                    </button>
+                </div>
+            `;
+
+            // Render rest of queue
+            const remaining = activeOnShift.filter(s => s.id !== current.id);
+            if (remaining.length === 0) {
+                queueList.innerHTML = `
+                    <div class="text-center py-4 text-xs text-gray-500 bg-[#1E1E1E]/60 rounded-xl border border-[#2A2A2A]">
+                        Больше нет продавцов в очереди
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            remaining.forEach((staff, index) => {
+                const posNumber = index + 2;
+                const isNext = posNumber === 2;
+                const staffIsConsulting = staff.status === 'consulting';
+                const staffIsBreak = staff.status === 'break';
+
+                html += `
+                    <div class="bg-[#1E1E1E] border ${isNext ? 'border-orange-500/40' : 'border-[#2A2A2A]'} rounded-xl p-3 flex items-center justify-between transition hover:border-[#3A3A3A]">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-lg ${isNext ? 'bg-orange-500/20 text-orange-400 border border-orange-500/40' : 'bg-[#242424] text-gray-400'} flex items-center justify-center font-bold text-xs">
+                                #${posNumber}
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <h4 class="text-sm font-bold text-white">${staff.name}</h4>
+                                    ${isNext ? '<span class="text-[10px] bg-orange-500/20 text-orange-400 font-semibold px-2 py-0.2 rounded-full">Следующий</span>' : ''}
+                                    ${staffIsConsulting ? '<span class="text-[10px] bg-blue-500/20 text-blue-400 font-semibold px-2 py-0.2 rounded-full">Консультация</span>' : ''}
+                                    ${staffIsBreak ? '<span class="text-[10px] bg-amber-500/20 text-amber-400 font-semibold px-2 py-0.2 rounded-full">Пауза</span>' : ''}
+                                </div>
+                                <p class="text-xs text-gray-400">${staff.role} • Продаж: <strong class="text-emerald-400">${staff.salesCount || 0}</strong></p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-1">
+                            <button onclick="moveInQueue('${staff.id}', -1)" title="Поднять выше" class="p-1.5 text-gray-400 hover:text-white hover:bg-[#2A2A2A] rounded-lg transition">
+                                <i class="fa-solid fa-chevron-up text-xs"></i>
+                            </button>
+                            <button onclick="moveInQueue('${staff.id}', 1)" title="Опустить ниже" class="p-1.5 text-gray-400 hover:text-white hover:bg-[#2A2A2A] rounded-lg transition">
+                                <i class="fa-solid fa-chevron-down text-xs"></i>
+                            </button>
+                            <button onclick="rotateToBack('${staff.id}')" title="В конец очереди" class="p-1.5 text-gray-400 hover:text-orange-400 hover:bg-[#2A2A2A] rounded-lg transition">
+                                <i class="fa-solid fa-rotate-right text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            queueList.innerHTML = html;
+        }
+
+        // 2. Render Bookings View
+        function renderBookingsView() {
+            const container = document.getElementById('bookingsList');
+            const bookings = window.appState.bookings;
+
+            if (!bookings || bookings.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12 bg-[#1E1E1E]/50 rounded-2xl border border-dashed border-[#2A2A2A] p-6">
+                        <i class="fa-solid fa-bookmark text-3xl text-gray-600 mb-2"></i>
+                        <p class="text-sm font-semibold text-gray-400">Активных броней пока нет</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            bookings.forEach(b => {
+                const isCompleted = b.status === 'completed';
+                const isCancelled = b.status === 'cancelled';
+                
+                let cardStyle = "border-[#2A2A2A]";
+                if (isCompleted) cardStyle = "border-emerald-900/40 opacity-60 bg-[#181818]";
+                if (isCancelled) cardStyle = "border-red-900/40 opacity-50 bg-[#181818]";
+
+                html += `
+                    <div class="bg-[#1E1E1E] border ${cardStyle} rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow">
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-sm text-white">${b.clientName}</span>
+                                ${b.phone ? `<span class="text-xs text-orange-400 font-medium"><i class="fa-solid fa-phone text-[10px]"></i> ${b.phone}</span>` : ''}
+                                ${isCompleted ? '<span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-bold">Обслужен</span>' : ''}
+                                ${isCancelled ? '<span class="text-[10px] bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full font-bold">Отменен</span>' : ''}
+                            </div>
+                            <p class="text-xs text-gray-300 font-medium"><i class="fa-solid fa-box text-orange-500 mr-1"></i> ${b.product}</p>
+                            <div class="flex items-center gap-3 text-[11px] text-gray-400 pt-0.5">
+                                <span><i class="fa-solid fa-user text-gray-500 mr-1"></i> Продавец: <strong class="text-gray-300">${b.consultant}</strong></span>
+                                <span><i class="fa-solid fa-clock text-gray-500 mr-1"></i> Время: ${b.time}</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-1.5 self-end sm:self-center">
+                            ${(!isCompleted && !isCancelled) ? `
+                                <button onclick="updateBookingStatus('${b.id}', 'completed')" class="bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600 hover:text-white border border-emerald-500/30 px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1">
+                                    <i class="fa-solid fa-check"></i> Продано
+                                </button>
+                                <button onclick="updateBookingStatus('${b.id}', 'cancelled')" class="bg-gray-800 text-gray-400 hover:text-red-400 px-2.5 py-1.5 rounded-xl text-xs transition">
+                                    Отменить
+                                </button>
+                            ` : ''}
+                            <button onclick="deleteBooking('${b.id}')" class="text-gray-600 hover:text-red-400 p-2 rounded-xl transition">
+                                <i class="fa-solid fa-trash-can text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // 3. Render Logs View
+        function renderLogsView() {
+            const container = document.getElementById('historyLogsList');
+            const filter = window.appState.logFilter;
+            let logs = window.appState.logs;
+
+            if (filter !== 'all') {
+                logs = logs.filter(l => l.type === filter);
+            }
+
+            if (!logs || logs.length === 0) {
+                container.innerHTML = '<div class="text-center py-8 text-gray-500 text-xs pl-6">Журнал событий пуст</div>';
+                return;
+            }
+
+            let html = '';
+            logs.forEach(log => {
+                let iconClass = "fa-info text-blue-400 bg-blue-500/10";
+                if (log.type === 'sale') iconClass = "fa-cart-shopping text-emerald-400 bg-emerald-500/10";
+                if (log.type === 'consultation') iconClass = "fa-headset text-orange-400 bg-orange-500/10";
+                if (log.type === 'booking') iconClass = "fa-bookmark text-amber-400 bg-amber-500/10";
+                if (log.type === 'break') iconClass = "fa-pause text-purple-400 bg-purple-500/10";
+
+                html += `
+                    <div class="relative pl-7 py-1.5">
+                        <div class="absolute left-2 top-2.5 w-4 h-4 rounded-full ${iconClass} border border-gray-800 flex items-center justify-center text-[9px] -translate-x-1/2">
+                            <i class="fa-solid ${iconClass.split(' ')[0]}"></i>
+                        </div>
+                        <div class="bg-[#1E1E1E] border border-[#2A2A2A] rounded-xl p-2.5 text-xs">
+                            <div class="flex justify-between items-center mb-0.5">
+                                <span class="font-bold text-gray-200">${log.author || 'Система'}</span>
+                                <span class="text-[10px] text-gray-500">${log.timeStr || ''}</span>
+                            </div>
+                            <p class="text-gray-300">${log.text}</p>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // 4. Render Staff Management View
+        function renderStaffView() {
+            const containerSellers = document.getElementById('staffGridSellers');
+            const containerManagement = document.getElementById('staffGridManagement');
+
+            const staffList = window.appState.staff;
+
+            const sellers = staffList.filter(s => s.category !== 'management');
+            const management = staffList.filter(s => s.category === 'management');
+
+            containerSellers.innerHTML = renderStaffCardList(sellers);
+            containerManagement.innerHTML = renderStaffCardList(management);
+        }
+
+        function renderStaffCardList(list) {
+            if (!list || list.length === 0) return '<div class="text-xs text-gray-500 italic p-2">Список пуст</div>';
+
+            return list.map(s => `
+                <div class="bg-[#1E1E1E] border ${s.onShift ? 'border-orange-500/40 bg-[#222222]' : 'border-[#2A2A2A] opacity-60'} rounded-2xl p-3 flex items-center justify-between transition">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl ${s.onShift ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' : 'bg-[#2A2A2A] text-gray-400'} flex items-center justify-center font-bold text-sm">
+                            ${s.name.substring(0, 2).toUpperCase()}
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-bold text-white">${s.name}</h4>
+                            <p class="text-xs text-gray-400">${s.role}</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <button onclick="toggleShift('${s.id}')" class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${s.onShift ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-[#2A2A2A] text-gray-400 border border-[#3A3A3A]'}">
+                            <i class="fa-solid ${s.onShift ? 'fa-check' : 'fa-plus'}"></i>
+                            ${s.onShift ? 'На смене' : 'Включить'}
+                        </button>
+                        <button onclick="deleteStaff('${s.id}')" class="text-gray-600 hover:text-red-400 p-1.5 rounded-lg transition">
+                            <i class="fa-solid fa-trash-can text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Timer Loop for Long Consultations
+        function startTimerLoop() {
+            setInterval(() => {
+                const timerEl = document.getElementById('consultTimerDisplay');
+                if (timerEl) {
+                    const startMs = parseInt(timerEl.getAttribute('data-start'));
+                    if (startMs) {
+                        const elapsedSec = Math.floor((Date.now() - startMs) / 1000);
+                        const mins = Math.floor(elapsedSec / 60).toString().padStart(2, '0');
+                        const secs = (elapsedSec % 60).toString().padStart(2, '0');
+                        timerEl.innerText = `${mins}:${secs}`;
+                    }
+                }
+            }, 1000);
+        }
+
+        // UI Helpers
+        function updateShiftCount() {
+            const activeCount = window.appState.staff.filter(s => s.onShift).length;
+            const badge = document.getElementById('activeShiftCount');
+            if (badge) badge.innerText = activeCount;
+        }
+
+        function updateBookingBadge() {
+            const pendingCount = window.appState.bookings.filter(b => b.status === 'pending').length;
+            const badge = document.getElementById('bookingBadge');
+            if (badge) {
+                if (pendingCount > 0) {
+                    badge.innerText = pendingCount;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+            }
+        }
+
+        window.switchTab = function(tabName) {
+            window.appState.currentActiveTab = tabName;
+
+            ['queue', 'bookings', 'history', 'staff'].forEach(t => {
+                const view = document.getElementById(`view-${t}`);
+                const btn = document.getElementById(`tab-${t}`);
+                if (t === tabName) {
+                    view.classList.remove('hidden');
+                    btn.className = "flex-1 py-2.5 rounded-xl text-center font-bold transition flex items-center justify-center gap-2 bg-citrus-500 text-white shadow-md";
+                } else {
+                    view.classList.add('hidden');
+                    btn.className = "flex-1 py-2.5 rounded-xl text-center font-bold text-gray-400 hover:text-white transition flex items-center justify-center gap-2";
+                }
+            });
+        };
+
+        window.filterLogs = function(type) {
+            window.appState.logFilter = type;
+            document.querySelectorAll('.log-filter-btn').forEach(btn => {
+                if (btn.getAttribute('data-filter') === type) {
+                    btn.className = "log-filter-btn px-3 py-1.5 rounded-xl bg-orange-500 text-white font-semibold whitespace-nowrap";
+                } else {
+                    btn.className = "log-filter-btn px-3 py-1.5 rounded-xl bg-[#242424] text-gray-400 font-medium hover:text-white whitespace-nowrap";
+                }
+            });
+            renderLogsView();
+        };
+
+        window.clearHistoryLogs = async function() {
+            if (isFirebaseActive && db) {
+                const logsRef = collection(db, 'artifacts', appId, 'public', 'data', 'logs');
+                const snap = await getDocs(logsRef);
+                snap.forEach(async (d) => await deleteDoc(d.ref));
+            } else {
+                window.appState.logs = [];
+                saveLocalState();
+                renderLogsView();
+            }
+            showToast("Журнал очищен", "info");
+        };
+
+        window.closeModal = function(id) {
+            document.getElementById(id).classList.add('hidden');
+        };
+
+        window.showToast = function(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            let borderStyle = "border-orange-500/40 text-white";
+            let icon = `<i class="fa-solid fa-bell text-orange-500"></i>`;
+
+            if (type === 'error') {
+                borderStyle = "border-red-500 bg-red-950/80 text-red-200";
+                icon = `<i class="fa-solid fa-circle-exclamation text-red-400 text-base"></i>`;
+            } else if (type === 'info') {
+                borderStyle = "border-blue-500/40 text-blue-200";
+                icon = `<i class="fa-solid fa-circle-info text-blue-400"></i>`;
+            }
+
+            toast.className = `pointer-events-auto bg-[#1E1E1E] border ${borderStyle} text-xs px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-2.5 transform transition duration-300 translate-y-2 opacity-0 font-medium`;
+            toast.innerHTML = `${icon} <span>${message}</span>`;
+
+            container.appendChild(toast);
+
+            setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 10);
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3200);
+        };
+
+        window.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
