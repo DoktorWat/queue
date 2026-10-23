@@ -91,8 +91,8 @@
                         <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-orange-500/20 text-orange-400 border border-orange-500/30">Очередь</span>
                     </div>
                     <p class="text-xs text-gray-400 flex items-center gap-1.5" id="syncStatus">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        Подключение к Firebase...
+                        <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                        Подключение...
                     </p>
                 </div>
             </div>
@@ -136,7 +136,6 @@
 
         <!-- VIEW 1: QUEUE TAB -->
         <section id="view-queue" class="space-y-4">
-            
             <!-- CURRENT TURN SPOTLIGHT CARD -->
             <div id="currentSpotlight" class="relative bg-gradient-to-br from-[#1E1E1E] via-[#222222] to-[#1A1A1A] border-2 border-orange-500/70 rounded-2xl p-4 sm:p-5 shadow-xl overflow-hidden card-glow">
                 <div class="absolute -right-8 -top-8 w-36 h-36 bg-orange-500/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -248,7 +247,6 @@
 
     </main>
 
-    <!-- MODALS -->
     <!-- MODAL 1: SALE LOG -->
     <div id="modalSale" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 hidden">
         <div class="bg-[#1E1E1E] border border-[#2A2A2A] rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl">
@@ -380,17 +378,7 @@
     <!-- FIREBASE REALTIME MODULES -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { 
-            getFirestore, 
-            collection, 
-            doc, 
-            getDocs, 
-            addDoc, 
-            updateDoc, 
-            deleteDoc, 
-            onSnapshot 
-        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
         // User's Real Firebase Config
         const firebaseConfig = {
@@ -404,21 +392,18 @@
             measurementId: "G-P4D85XRRM3"
         };
 
-        const appId = 'citrus-queue-app';
-        let db = null;
-        let auth = null;
-        let currentUser = null;
+        let rtdb = null;
         let isFirebaseActive = false;
 
         const DEFAULT_CITRUS_TEAM = [
-            { name: "Тихон", role: "Продавец-консультант", category: "seller", onShift: true, status: "idle", order: 1, salesCount: 0, consultStartTime: null },
-            { name: "Данил", role: "Продавец-консультант", category: "seller", onShift: true, status: "idle", order: 2, salesCount: 0, consultStartTime: null },
-            { name: "Диана", role: "Продавец-консультант", category: "seller", onShift: true, status: "idle", order: 3, salesCount: 0, consultStartTime: null },
-            { name: "Юля", role: "Продавец-консультант", category: "seller", onShift: true, status: "idle", order: 4, salesCount: 0, consultStartTime: null },
-            { name: "Дима", role: "Продавец-консультант", category: "seller", onShift: true, status: "idle", order: 5, salesCount: 0, consultStartTime: null },
-            { name: "Виталя", role: "Администратор", category: "management", onShift: false, status: "idle", order: 6, salesCount: 0, consultStartTime: null },
-            { name: "Андрей", role: "Директор", category: "management", onShift: false, status: "idle", order: 7, salesCount: 0, consultStartTime: null },
-            { name: "Вика", role: "Кассир", category: "management", onShift: false, status: "idle", order: 8, salesCount: 0, consultStartTime: null }
+            { id: "1", name: "Тихон", role: "Продавец-консультант", category: "seller", onShift: true, status: "idle", order: 1, salesCount: 0, consultStartTime: null },
+            { id: "2", name: "Данил", role: "Продавец-консультант", category: "seller", onShift: true, status: "idle", order: 2, salesCount: 0, consultStartTime: null },
+            { id: "3", name: "Диана", role: "Продавец-консультант", category: "seller", onShift: true, status: "idle", order: 3, salesCount: 0, consultStartTime: null },
+            { id: "4", name: "Юля", role: "Продавец-консультант", category: "seller", onShift: true, status: "idle", order: 4, salesCount: 0, consultStartTime: null },
+            { id: "5", name: "Дима", role: "Продавец-консультант", category: "seller", onShift: true, status: "idle", order: 5, salesCount: 0, consultStartTime: null },
+            { id: "6", name: "Виталя", role: "Администратор", category: "management", onShift: false, status: "idle", order: 6, salesCount: 0, consultStartTime: null },
+            { id: "7", name: "Андрей", role: "Директор", category: "management", onShift: false, status: "idle", order: 7, salesCount: 0, consultStartTime: null },
+            { id: "8", name: "Вика", role: "Кассир", category: "management", onShift: false, status: "idle", order: 8, salesCount: 0, consultStartTime: null }
         ];
 
         window.appState = {
@@ -446,79 +431,62 @@
         async function initApp() {
             try {
                 const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
+                rtdb = getDatabase(app);
 
-                const userCred = await signInAnonymously(auth);
-                currentUser = userCred.user;
+                const dbRef = ref(rtdb, 'citrus_queue_store');
+                
+                onValue(dbRef, (snapshot) => {
+                    const data = snapshot.val();
+                    isFirebaseActive = true;
+                    updateSyncBadge(true, "🟢 Live Sync (Онлайн)");
 
-                isFirebaseActive = true;
-                updateSyncBadge(true, "Live Sync (Firebase)");
-                setupFirestoreListeners();
+                    if (!data || !data.staff || data.staff.length === 0) {
+                        saveToCloud(DEFAULT_CITRUS_TEAM, [], []);
+                    } else {
+                        window.appState.staff = deduplicateStaff(data.staff || []);
+                        window.appState.bookings = data.bookings || [];
+                        window.appState.logs = data.logs || [];
+                        renderAllViews();
+                    }
+                }, (err) => {
+                    console.error("Realtime DB Permission/Network Error:", err);
+                    updateSyncBadge(false, "⚠️ Включи Test Mode в Realtime DB!");
+                    setupLocalFallback();
+                });
+
             } catch (err) {
-                console.warn("Firebase offline fallback mode:", err);
+                console.warn("Firebase fallback mode:", err);
                 setupLocalFallback();
             }
+
             startTimerLoop();
         }
 
-        function setupFirestoreListeners() {
-            if (!db || !currentUser) return;
-
-            const staffRef = collection(db, 'artifacts', appId, 'public', 'data', 'staff');
-            const bookingsRef = collection(db, 'artifacts', appId, 'public', 'data', 'bookings');
-            const logsRef = collection(db, 'artifacts', appId, 'public', 'data', 'logs');
-
-            onSnapshot(staffRef, (snapshot) => {
-                const rawList = [];
-                snapshot.forEach(docSnap => {
-                    rawList.push({ id: docSnap.id, ...docSnap.data() });
-                });
-
-                if (rawList.length === 0) {
-                    seedDefaultTeamFirebase();
-                } else {
-                    const cleanList = deduplicateStaff(rawList);
-                    cleanList.sort((a, b) => (a.order || 0) - (b.order || 0));
-                    window.appState.staff = cleanList;
-                    renderAllViews();
+        async function saveToCloud(staff = window.appState.staff, bookings = window.appState.bookings, logs = window.appState.logs) {
+            if (isFirebaseActive && rtdb) {
+                try {
+                    const dbRef = ref(rtdb, 'citrus_queue_store');
+                    await set(dbRef, { staff, bookings, logs });
+                } catch (e) {
+                    console.error("Save cloud error:", e);
                 }
-            }, (err) => console.error("Staff snapshot error:", err));
-
-            onSnapshot(bookingsRef, (snapshot) => {
-                const list = [];
-                snapshot.forEach(docSnap => {
-                    list.push({ id: docSnap.id, ...docSnap.data() });
-                });
-                list.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-                window.appState.bookings = list;
-                renderBookingsView();
-                updateBookingBadge();
-            }, (err) => console.error("Bookings snapshot error:", err));
-
-            onSnapshot(logsRef, (snapshot) => {
-                const list = [];
-                snapshot.forEach(docSnap => {
-                    list.push({ id: docSnap.id, ...docSnap.data() });
-                });
-                list.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-                window.appState.logs = list;
-                renderLogsView();
-            }, (err) => console.error("Logs snapshot error:", err));
+            } else {
+                saveLocalState();
+                renderAllViews();
+            }
         }
 
         function setupLocalFallback() {
             isFirebaseActive = false;
-            updateSyncBadge(false, "Локальный режим");
 
-            const savedStaff = localStorage.getItem('citrus_staff_v3');
-            const savedBookings = localStorage.getItem('citrus_bookings_v3');
-            const savedLogs = localStorage.getItem('citrus_logs_v3');
+            const savedStaff = localStorage.getItem('citrus_staff_v4');
+            const savedBookings = localStorage.getItem('citrus_bookings_v4');
+            const savedLogs = localStorage.getItem('citrus_logs_v4');
 
             if (savedStaff) {
                 window.appState.staff = deduplicateStaff(JSON.parse(savedStaff));
             } else {
-                seedDefaultTeamLocal();
+                window.appState.staff = DEFAULT_CITRUS_TEAM;
             }
 
             if (savedBookings) window.appState.bookings = JSON.parse(savedBookings);
@@ -532,47 +500,24 @@
             if (!badge) return;
             if (online) {
                 badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> ${text}`;
-                badge.className = "text-xs text-emerald-400 flex items-center gap-1.5 font-medium";
+                badge.className = "text-xs text-emerald-400 flex items-center gap-1.5 font-semibold";
             } else {
                 badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500"></span> ${text}`;
-                badge.className = "text-xs text-amber-400 flex items-center gap-1.5 font-medium";
+                badge.className = "text-xs text-amber-400 flex items-center gap-1.5 font-semibold";
             }
-        }
-
-        async function seedDefaultTeamFirebase() {
-            const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'staff');
-            const existingSnap = await getDocs(colRef);
-            for (const d of existingSnap.docs) {
-                await deleteDoc(d.ref);
-            }
-            for (const member of DEFAULT_CITRUS_TEAM) {
-                await addDoc(colRef, member);
-            }
-        }
-
-        function seedDefaultTeamLocal() {
-            window.appState.staff = DEFAULT_CITRUS_TEAM.map((m, idx) => ({
-                id: (idx + 1).toString(),
-                ...m
-            }));
-            saveLocalState();
-            renderAllViews();
         }
 
         window.resetDefaultTeam = async function() {
-            if (isFirebaseActive && db) {
-                await seedDefaultTeamFirebase();
-            } else {
-                seedDefaultTeamLocal();
-            }
+            window.appState.staff = DEFAULT_CITRUS_TEAM;
+            await saveToCloud();
             showToast("Состав сброшен до 8 сотрудников", "info");
         };
 
         function saveLocalState() {
             if (!isFirebaseActive) {
-                localStorage.setItem('citrus_staff_v3', JSON.stringify(window.appState.staff));
-                localStorage.setItem('citrus_bookings_v3', JSON.stringify(window.appState.bookings));
-                localStorage.setItem('citrus_logs_v3', JSON.stringify(window.appState.logs));
+                localStorage.setItem('citrus_staff_v4', JSON.stringify(window.appState.staff));
+                localStorage.setItem('citrus_bookings_v4', JSON.stringify(window.appState.bookings));
+                localStorage.setItem('citrus_logs_v4', JSON.stringify(window.appState.logs));
             }
         }
 
@@ -582,18 +527,11 @@
             if (!target) return;
 
             const maxOrder = staffList.reduce((max, s) => Math.max(max, s.order || 0), 0);
-            const newOrder = maxOrder + 1;
+            target.order = maxOrder + 1;
+            target.status = 'idle';
+            target.consultStartTime = null;
 
-            if (isFirebaseActive && db) {
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'staff', staffId);
-                await updateDoc(docRef, { order: newOrder, status: 'idle', consultStartTime: null });
-            } else {
-                target.order = newOrder;
-                target.status = 'idle';
-                target.consultStartTime = null;
-                saveLocalState();
-                renderAllViews();
-            }
+            await saveToCloud();
         };
 
         window.toggleConsultation = async function(staffId) {
@@ -601,21 +539,14 @@
             if (!target) return;
 
             if (target.status === 'consulting') {
-                await addLogEvent('consultation', `${target.name} завершил(а) долгую консультацию`, target.name);
-                await rotateToBack(staffId);
+                addLogEvent('consultation', `${target.name} завершил(а) долгую консультацию`, target.name);
+                await window.rotateToBack(staffId);
                 showToast(`Консультация завершена. ${target.name} смещен(а) в конец.`);
             } else {
-                const now = Date.now();
-                if (isFirebaseActive && db) {
-                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'staff', staffId);
-                    await updateDoc(docRef, { status: 'consulting', consultStartTime: now });
-                } else {
-                    target.status = 'consulting';
-                    target.consultStartTime = now;
-                    saveLocalState();
-                    renderAllViews();
-                }
-                await addLogEvent('consultation', `${target.name} начал(а) долгую консультацию`, target.name);
+                target.status = 'consulting';
+                target.consultStartTime = Date.now();
+                addLogEvent('consultation', `${target.name} начал(а) долгую консультацию`, target.name);
+                await saveToCloud();
                 showToast(`${target.name}: включен таймер консультации`);
             }
         };
@@ -625,20 +556,12 @@
             if (!target) return;
 
             const isBreak = target.status === 'break';
-            const newStatus = isBreak ? 'idle' : 'break';
-
-            if (isFirebaseActive && db) {
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'staff', staffId);
-                await updateDoc(docRef, { status: newStatus, consultStartTime: null });
-            } else {
-                target.status = newStatus;
-                target.consultStartTime = null;
-                saveLocalState();
-                renderAllViews();
-            }
+            target.status = isBreak ? 'idle' : 'break';
+            target.consultStartTime = null;
 
             const txt = isBreak ? 'вернулся(лась) в очередь' : 'на перерыве';
-            await addLogEvent('break', `${target.name} ${txt}`, target.name);
+            addLogEvent('break', `${target.name} ${txt}`, target.name);
+            await saveToCloud();
             showToast(`${target.name} ${txt}`);
         };
 
@@ -646,20 +569,12 @@
             const target = window.appState.staff.find(s => s.id === staffId);
             if (!target) return;
 
-            const newShift = !target.onShift;
+            target.onShift = !target.onShift;
+            target.status = 'idle';
 
-            if (isFirebaseActive && db) {
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'staff', staffId);
-                await updateDoc(docRef, { onShift: newShift, status: 'idle' });
-            } else {
-                target.onShift = newShift;
-                target.status = 'idle';
-                saveLocalState();
-                renderAllViews();
-            }
-
-            const txt = newShift ? 'вышел(шла) на смену' : 'снят(а) со смены';
-            await addLogEvent('shift', `${target.name} ${txt}`, target.name);
+            const txt = target.onShift ? 'вышел(шла) на смену' : 'снят(а) со смены';
+            addLogEvent('shift', `${target.name} ${txt}`, target.name);
+            await saveToCloud();
             showToast(`${target.name} ${txt}`);
         };
 
@@ -681,19 +596,12 @@
             itemA.order = itemB.order || 2;
             itemB.order = tempOrder;
 
-            if (isFirebaseActive && db) {
-                const docA = doc(db, 'artifacts', appId, 'public', 'data', 'staff', itemA.id);
-                const docB = doc(db, 'artifacts', appId, 'public', 'data', 'staff', itemB.id);
-                await updateDoc(docA, { order: itemA.order });
-                await updateDoc(docB, { order: itemB.order });
-            } else {
-                saveLocalState();
-                renderAllViews();
-            }
+            await saveToCloud();
         };
 
-        async function addLogEvent(type, text, author) {
+        function addLogEvent(type, text, author) {
             const newLog = {
+                id: Date.now().toString(),
                 type,
                 text,
                 author: author || 'Система',
@@ -701,14 +609,7 @@
                 timeStr: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             };
 
-            if (isFirebaseActive && db) {
-                const logsRef = collection(db, 'artifacts', appId, 'public', 'data', 'logs');
-                await addDoc(logsRef, newLog);
-            } else {
-                window.appState.logs.unshift({ id: Date.now().toString(), ...newLog });
-                saveLocalState();
-                renderLogsView();
-            }
+            window.appState.logs.unshift(newLog);
         }
 
         window.openSaleModal = function(staffId) {
@@ -735,18 +636,11 @@
             if (amount) logText += ` на ${amount} грн`;
             if (note) logText += `. [${note}]`;
 
-            const newSalesCount = (staff.salesCount || 0) + 1;
-
-            if (isFirebaseActive && db) {
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'staff', staffId);
-                await updateDoc(docRef, { salesCount: newSalesCount });
-            } else {
-                staff.salesCount = newSalesCount;
-            }
-
-            await addLogEvent('sale', logText, staff.name);
+            staff.salesCount = (staff.salesCount || 0) + 1;
+            addLogEvent('sale', logText, staff.name);
+            
             closeModal('modalSale');
-            await rotateToBack(staffId);
+            await window.rotateToBack(staffId);
             showToast(`Продажа зафиксирована! ${staff.name} уходит в конец очереди.`);
         };
 
@@ -774,6 +668,7 @@
             const time = document.getElementById('bookingTime').value.trim();
 
             const newBooking = {
+                id: Date.now().toString(),
                 clientName,
                 phone: phone || 'Телефон не указан',
                 product: product || 'Консультация',
@@ -783,44 +678,24 @@
                 timestamp: Date.now()
             };
 
-            if (isFirebaseActive && db) {
-                const bookingsRef = collection(db, 'artifacts', appId, 'public', 'data', 'bookings');
-                await addDoc(bookingsRef, newBooking);
-            } else {
-                window.appState.bookings.unshift({ id: Date.now().toString(), ...newBooking });
-                saveLocalState();
-                renderBookingsView();
-                updateBookingBadge();
-            }
-
-            await addLogEvent('booking', `Бронь: ${clientName} — ${product} (${consultant})`, 'Клиент');
+            window.appState.bookings.unshift(newBooking);
+            addLogEvent('booking', `Бронь: ${clientName} — ${product} (${consultant})`, 'Клиент');
+            
             closeModal('modalBooking');
+            await saveToCloud();
             showToast("Бронь добавлена!");
         };
 
         window.updateBookingStatus = async function(bookingId, status) {
-            if (isFirebaseActive && db) {
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'bookings', bookingId);
-                await updateDoc(docRef, { status });
-            } else {
-                const b = window.appState.bookings.find(x => x.id === bookingId);
-                if (b) b.status = status;
-                saveLocalState();
-                renderBookingsView();
-            }
+            const b = window.appState.bookings.find(x => x.id === bookingId);
+            if (b) b.status = status;
+            await saveToCloud();
             showToast(status === 'completed' ? "Бронь отмечена как Продано" : "Бронь отменена");
         };
 
         window.deleteBooking = async function(bookingId) {
-            if (isFirebaseActive && db) {
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'bookings', bookingId);
-                await deleteDoc(docRef);
-            } else {
-                window.appState.bookings = window.appState.bookings.filter(x => x.id !== bookingId);
-                saveLocalState();
-                renderBookingsView();
-                updateBookingBadge();
-            }
+            window.appState.bookings = window.appState.bookings.filter(x => x.id !== bookingId);
+            await saveToCloud();
             showToast("Бронь удалена");
         };
 
@@ -848,6 +723,7 @@
             const maxOrder = window.appState.staff.reduce((max, s) => Math.max(max, s.order || 0), 0);
 
             const newStaff = {
+                id: Date.now().toString(),
                 name,
                 role,
                 category,
@@ -858,17 +734,11 @@
                 consultStartTime: null
             };
 
-            if (isFirebaseActive && db) {
-                const staffRef = collection(db, 'artifacts', appId, 'public', 'data', 'staff');
-                await addDoc(staffRef, newStaff);
-            } else {
-                window.appState.staff.push({ id: Date.now().toString(), ...newStaff });
-                saveLocalState();
-                renderAllViews();
-            }
-
-            await addLogEvent('staff', `Добавлен сотрудник: ${name} (${role})`, 'Настройки');
+            window.appState.staff.push(newStaff);
+            addLogEvent('staff', `Добавлен сотрудник: ${name} (${role})`, 'Настройки');
+            
             closeModal('modalAddStaff');
+            await saveToCloud();
             showToast(`${name} добавлен(а) в команду`);
         };
 
@@ -876,14 +746,8 @@
             const staff = window.appState.staff.find(s => s.id === staffId);
             if (!staff) return;
 
-            if (isFirebaseActive && db) {
-                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'staff', staffId);
-                await deleteDoc(docRef);
-            } else {
-                window.appState.staff = window.appState.staff.filter(s => s.id !== staffId);
-                saveLocalState();
-                renderAllViews();
-            }
+            window.appState.staff = window.appState.staff.filter(s => s.id !== staffId);
+            await saveToCloud();
             showToast(`${staff.name} удален(а) из списка`);
         };
 
@@ -1232,15 +1096,8 @@
         };
 
         window.clearHistoryLogs = async function() {
-            if (isFirebaseActive && db) {
-                const logsRef = collection(db, 'artifacts', appId, 'public', 'data', 'logs');
-                const snap = await getDocs(logsRef);
-                snap.forEach(async (d) => await deleteDoc(d.ref));
-            } else {
-                window.appState.logs = [];
-                saveLocalState();
-                renderLogsView();
-            }
+            window.appState.logs = [];
+            await saveToCloud();
             showToast("Журнал очищен", "info");
         };
 
