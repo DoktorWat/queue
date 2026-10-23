@@ -52,7 +52,6 @@
         .card-glow {
             box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.6);
         }
-        /* Custom scrollbar */
         ::-webkit-scrollbar {
             width: 6px;
             height: 6px;
@@ -82,7 +81,6 @@
     <!-- TOP HEADER -->
     <header class="sticky top-0 z-30 bg-[#1A1A1A]/95 backdrop-blur-md border-b border-[#2A2A2A] px-4 py-3 shadow-md">
         <div class="max-w-4xl mx-auto flex items-center justify-between">
-            <!-- Brand Logo -->
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl citrus-gradient flex items-center justify-center font-black text-white text-xl shadow-lg">
                     Ц
@@ -94,12 +92,11 @@
                     </div>
                     <p class="text-xs text-gray-400 flex items-center gap-1.5" id="syncStatus">
                         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        Подключение...
+                        Подключение к Firebase...
                     </p>
                 </div>
             </div>
 
-            <!-- Quick Info & Staff Settings -->
             <div class="flex items-center gap-2">
                 <div class="flex items-center text-xs bg-[#242424] rounded-xl px-3 py-1.5 border border-[#333333]">
                     <span class="text-gray-400 mr-1.5">На смене:</span>
@@ -142,7 +139,6 @@
             
             <!-- CURRENT TURN SPOTLIGHT CARD -->
             <div id="currentSpotlight" class="relative bg-gradient-to-br from-[#1E1E1E] via-[#222222] to-[#1A1A1A] border-2 border-orange-500/70 rounded-2xl p-4 sm:p-5 shadow-xl overflow-hidden card-glow">
-                <!-- Glowing ambient background -->
                 <div class="absolute -right-8 -top-8 w-36 h-36 bg-orange-500/10 rounded-full blur-3xl pointer-events-none"></div>
                 
                 <div class="flex items-center justify-between mb-3 border-b border-[#2A2A2A] pb-3">
@@ -153,7 +149,6 @@
                     <span class="text-xs text-gray-400 font-medium" id="spotlightPos">Позиция №1</span>
                 </div>
 
-                <!-- Active Employee Spotlight -->
                 <div id="spotlightEmployeeContainer">
                     <div class="text-center py-6 text-gray-400">
                         <i class="fa-solid fa-spinner fa-spin text-2xl text-orange-500 mb-2"></i>
@@ -169,9 +164,7 @@
                     <span class="text-gray-500 text-[11px] font-normal">Порядок перемещения</span>
                 </div>
 
-                <div id="queueList" class="space-y-2">
-                    <!-- Dynamic queue items go here -->
-                </div>
+                <div id="queueList" class="space-y-2"></div>
             </div>
 
             <!-- EMPTY QUEUE NOTICE -->
@@ -204,9 +197,7 @@
                 </button>
             </div>
 
-            <div id="bookingsList" class="space-y-2.5">
-                <!-- Bookings loaded here -->
-            </div>
+            <div id="bookingsList" class="space-y-2.5"></div>
         </section>
 
         <!-- VIEW 3: HISTORY LOG TAB -->
@@ -221,7 +212,6 @@
                 </button>
             </div>
 
-            <!-- Filter chips -->
             <div class="flex gap-1.5 overflow-x-auto pb-1 text-xs">
                 <button onclick="filterLogs('all')" class="log-filter-btn px-3 py-1.5 rounded-xl bg-orange-500 text-white font-semibold whitespace-nowrap" data-filter="all">Все события</button>
                 <button onclick="filterLogs('sale')" class="log-filter-btn px-3 py-1.5 rounded-xl bg-[#242424] text-gray-400 font-medium hover:text-white whitespace-nowrap" data-filter="sale">🛒 Продажи</button>
@@ -229,9 +219,7 @@
                 <button onclick="filterLogs('booking')" class="log-filter-btn px-3 py-1.5 rounded-xl bg-[#242424] text-gray-400 font-medium hover:text-white whitespace-nowrap" data-filter="booking">📌 Брони</button>
             </div>
 
-            <div id="historyLogsList" class="space-y-2 relative before:absolute before:left-4 before:top-2 before:bottom-2 before:w-0.5 before:bg-[#2A2A2A]">
-                <!-- History logs here -->
-            </div>
+            <div id="historyLogsList" class="space-y-2 relative before:absolute before:left-4 before:top-2 before:bottom-2 before:w-0.5 before:bg-[#2A2A2A]"></div>
         </section>
 
         <!-- VIEW 4: STAFF MANAGEMENT TAB -->
@@ -247,25 +235,20 @@
                 </button>
             </div>
 
-            <!-- Section 1: Standard Sellers -->
             <div class="space-y-2">
                 <div class="text-xs font-bold text-orange-400 uppercase tracking-wider px-1">Продавцы (Основная смена)</div>
-                <div id="staffGridSellers" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    <!-- Standard sellers cards -->
-                </div>
+                <div id="staffGridSellers" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5"></div>
             </div>
 
-            <!-- Section 2: Management & Cashier -->
             <div class="space-y-2 pt-2">
                 <div class="text-xs font-bold text-gray-400 uppercase tracking-wider px-1">Руководство & Касса (Вне очереди)</div>
-                <div id="staffGridManagement" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    <!-- Admin, Director, Cashier cards -->
-                </div>
+                <div id="staffGridManagement" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5"></div>
             </div>
         </section>
 
     </main>
 
+    <!-- MODALS -->
     <!-- MODAL 1: SALE LOG -->
     <div id="modalSale" class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 hidden">
         <div class="bg-[#1E1E1E] border border-[#2A2A2A] rounded-2xl max-w-md w-full p-5 space-y-4 shadow-2xl">
@@ -334,9 +317,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-gray-300 mb-1">Закрепленный продавец</label>
-                    <select id="bookingConsultantSelect" class="w-full bg-[#121212] border border-[#333333] rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500 transition">
-                        <!-- Dynamic options -->
-                    </select>
+                    <select id="bookingConsultantSelect" class="w-full bg-[#121212] border border-[#333333] rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500 transition"></select>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-gray-300 mb-1">Время / Ожидание</label>
@@ -368,7 +349,7 @@
 
             <form id="addStaffForm" onsubmit="submitAddStaff(event)" class="space-y-3">
                 <div>
-                    <label class="block text-xs font-semibold text-gray-300 mb-1">Имя * (должно быть уникальным)</label>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1">Имя * (уникальное)</label>
                     <input type="text" id="staffName" required placeholder="Например: Олег" class="w-full bg-[#121212] border border-[#333333] rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500 transition">
                 </div>
                 <div>
@@ -393,18 +374,17 @@
         </div>
     </div>
 
-    <!-- TOAST NOTIFICATION CONTAINER -->
+    <!-- TOAST CONTAINER -->
     <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
     <!-- FIREBASE REALTIME MODULES -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { 
             getFirestore, 
             collection, 
             doc, 
-            setDoc, 
             getDocs, 
             addDoc, 
             updateDoc, 
@@ -412,29 +392,35 @@
             onSnapshot 
         } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Global app configuration
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'citrus-queue-app';
+        // User's Real Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyBGUbcvYeBWEuHGI171Q_dcklVjDjn9liU",
+            authDomain: "tichon-fa8e0.firebaseapp.com",
+            databaseURL: "https://tichon-fa8e0-default-rtdb.firebaseio.com",
+            projectId: "tichon-fa8e0",
+            storageBucket: "tichon-fa8e0.firebasestorage.app",
+            messagingSenderId: "454112829007",
+            appId: "1:454112829007:web:8a41b19023fce10c5d543a",
+            measurementId: "G-P4D85XRRM3"
+        };
+
+        const appId = 'citrus-queue-app';
         let db = null;
         let auth = null;
         let currentUser = null;
         let isFirebaseActive = false;
 
-        // Citrus Staff Defaults (Strict 8 Unique Members)
         const DEFAULT_CITRUS_TEAM = [
-            // Standard Sellers (Active by default: 5 sellers)
             { name: "Тихон", role: "Продавец-консультант", category: "seller", onShift: true, status: "idle", order: 1, salesCount: 0, consultStartTime: null },
             { name: "Данил", role: "Продавец-консультант", category: "seller", onShift: true, status: "idle", order: 2, salesCount: 0, consultStartTime: null },
             { name: "Диана", role: "Продавец-консультант", category: "seller", onShift: true, status: "idle", order: 3, salesCount: 0, consultStartTime: null },
             { name: "Юля", role: "Продавец-консультант", category: "seller", onShift: true, status: "idle", order: 4, salesCount: 0, consultStartTime: null },
             { name: "Дима", role: "Продавец-консультант", category: "seller", onShift: true, status: "idle", order: 5, salesCount: 0, consultStartTime: null },
-            
-            // Management & Cashier (Off Shift by default: 3 members)
             { name: "Виталя", role: "Администратор", category: "management", onShift: false, status: "idle", order: 6, salesCount: 0, consultStartTime: null },
             { name: "Андрей", role: "Директор", category: "management", onShift: false, status: "idle", order: 7, salesCount: 0, consultStartTime: null },
             { name: "Вика", role: "Кассир", category: "management", onShift: false, status: "idle", order: 8, salesCount: 0, consultStartTime: null }
         ];
 
-        // Global app state
         window.appState = {
             staff: [],
             bookings: [],
@@ -444,13 +430,9 @@
             activeSaleStaffId: null
         };
 
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-
-        // Deduplicate Staff Array by Name (Strict Uniqueness Guard)
         function deduplicateStaff(list) {
             const seenNames = new Set();
             const uniqueList = [];
-
             for (const member of list) {
                 const normName = (member.name || '').trim().toLowerCase();
                 if (normName && !seenNames.has(normName)) {
@@ -461,37 +443,25 @@
             return uniqueList;
         }
 
-        // Initialize Firebase & Fallbacks
         async function initApp() {
-            if (firebaseConfig) {
-                try {
-                    const app = initializeApp(firebaseConfig);
-                    db = getFirestore(app);
-                    auth = getAuth(app);
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
 
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        const userCred = await signInWithCustomToken(auth, __initial_auth_token);
-                        currentUser = userCred.user;
-                    } else {
-                        const userCred = await signInAnonymously(auth);
-                        currentUser = userCred.user;
-                    }
+                const userCred = await signInAnonymously(auth);
+                currentUser = userCred.user;
 
-                    isFirebaseActive = true;
-                    updateSyncBadge(true, "Firebase Live Sync");
-                    setupFirestoreListeners();
-                } catch (err) {
-                    console.warn("Firebase fallback mode activated:", err);
-                    setupLocalFallback();
-                }
-            } else {
+                isFirebaseActive = true;
+                updateSyncBadge(true, "Live Sync (Firebase)");
+                setupFirestoreListeners();
+            } catch (err) {
+                console.warn("Firebase offline fallback mode:", err);
                 setupLocalFallback();
             }
-
             startTimerLoop();
         }
 
-        // Firestore Listeners
         function setupFirestoreListeners() {
             if (!db || !currentUser) return;
 
@@ -499,7 +469,6 @@
             const bookingsRef = collection(db, 'artifacts', appId, 'public', 'data', 'bookings');
             const logsRef = collection(db, 'artifacts', appId, 'public', 'data', 'logs');
 
-            // 1. Staff Listener with Strict Deduplication
             onSnapshot(staffRef, (snapshot) => {
                 const rawList = [];
                 snapshot.forEach(docSnap => {
@@ -516,7 +485,6 @@
                 }
             }, (err) => console.error("Staff snapshot error:", err));
 
-            // 2. Bookings Listener
             onSnapshot(bookingsRef, (snapshot) => {
                 const list = [];
                 snapshot.forEach(docSnap => {
@@ -528,7 +496,6 @@
                 updateBookingBadge();
             }, (err) => console.error("Bookings snapshot error:", err));
 
-            // 3. Logs Listener
             onSnapshot(logsRef, (snapshot) => {
                 const list = [];
                 snapshot.forEach(docSnap => {
@@ -540,7 +507,6 @@
             }, (err) => console.error("Logs snapshot error:", err));
         }
 
-        // Offline / LocalStorage mode
         function setupLocalFallback() {
             isFirebaseActive = false;
             updateSyncBadge(false, "Локальный режим");
@@ -550,8 +516,7 @@
             const savedLogs = localStorage.getItem('citrus_logs_v3');
 
             if (savedStaff) {
-                const parsed = JSON.parse(savedStaff);
-                window.appState.staff = deduplicateStaff(parsed);
+                window.appState.staff = deduplicateStaff(JSON.parse(savedStaff));
             } else {
                 seedDefaultTeamLocal();
             }
@@ -574,17 +539,12 @@
             }
         }
 
-        // --- TEAM SEEDING & ACTIONS --- //
-
         async function seedDefaultTeamFirebase() {
             const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'staff');
-            
-            // Delete any existing items first to guarantee no duplicates
             const existingSnap = await getDocs(colRef);
             for (const d of existingSnap.docs) {
                 await deleteDoc(d.ref);
             }
-
             for (const member of DEFAULT_CITRUS_TEAM) {
                 await addDoc(colRef, member);
             }
@@ -605,7 +565,7 @@
             } else {
                 seedDefaultTeamLocal();
             }
-            showToast("Список команды сброшен до 8 уникальных сотрудников", "info");
+            showToast("Состав сброшен до 8 сотрудников", "info");
         };
 
         function saveLocalState() {
@@ -616,7 +576,6 @@
             }
         }
 
-        // Rotate seller to the back of the queue
         window.rotateToBack = async function(staffId) {
             const staffList = window.appState.staff;
             const target = staffList.find(s => s.id === staffId);
@@ -627,11 +586,7 @@
 
             if (isFirebaseActive && db) {
                 const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'staff', staffId);
-                await updateDoc(docRef, {
-                    order: newOrder,
-                    status: 'idle',
-                    consultStartTime: null
-                });
+                await updateDoc(docRef, { order: newOrder, status: 'idle', consultStartTime: null });
             } else {
                 target.order = newOrder;
                 target.status = 'idle';
@@ -641,7 +596,6 @@
             }
         };
 
-        // Toggle Long Consultation Mode
         window.toggleConsultation = async function(staffId) {
             const target = window.appState.staff.find(s => s.id === staffId);
             if (!target) return;
@@ -649,15 +603,12 @@
             if (target.status === 'consulting') {
                 await addLogEvent('consultation', `${target.name} завершил(а) долгую консультацию`, target.name);
                 await rotateToBack(staffId);
-                showToast(`Консультация завершена. ${target.name} смещен(а) в конец очереди.`);
+                showToast(`Консультация завершена. ${target.name} смещен(а) в конец.`);
             } else {
                 const now = Date.now();
                 if (isFirebaseActive && db) {
                     const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'staff', staffId);
-                    await updateDoc(docRef, {
-                        status: 'consulting',
-                        consultStartTime: now
-                    });
+                    await updateDoc(docRef, { status: 'consulting', consultStartTime: now });
                 } else {
                     target.status = 'consulting';
                     target.consultStartTime = now;
@@ -665,11 +616,10 @@
                     renderAllViews();
                 }
                 await addLogEvent('consultation', `${target.name} начал(а) долгую консультацию`, target.name);
-                showToast(`${target.name}: включен таймер долгой консультации`);
+                showToast(`${target.name}: включен таймер консультации`);
             }
         };
 
-        // Toggle AFK / Break
         window.toggleBreak = async function(staffId) {
             const target = window.appState.staff.find(s => s.id === staffId);
             if (!target) return;
@@ -679,10 +629,7 @@
 
             if (isFirebaseActive && db) {
                 const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'staff', staffId);
-                await updateDoc(docRef, {
-                    status: newStatus,
-                    consultStartTime: null
-                });
+                await updateDoc(docRef, { status: newStatus, consultStartTime: null });
             } else {
                 target.status = newStatus;
                 target.consultStartTime = null;
@@ -690,12 +637,11 @@
                 renderAllViews();
             }
 
-            const txt = isBreak ? 'вернулся(лась) в очередь' : 'отошел(шла) / на перерыве';
+            const txt = isBreak ? 'вернулся(лась) в очередь' : 'на перерыве';
             await addLogEvent('break', `${target.name} ${txt}`, target.name);
             showToast(`${target.name} ${txt}`);
         };
 
-        // Toggle Shift Active status
         window.toggleShift = async function(staffId) {
             const target = window.appState.staff.find(s => s.id === staffId);
             if (!target) return;
@@ -704,10 +650,7 @@
 
             if (isFirebaseActive && db) {
                 const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'staff', staffId);
-                await updateDoc(docRef, {
-                    onShift: newShift,
-                    status: 'idle'
-                });
+                await updateDoc(docRef, { onShift: newShift, status: 'idle' });
             } else {
                 target.onShift = newShift;
                 target.status = 'idle';
@@ -720,7 +663,6 @@
             showToast(`${target.name} ${txt}`);
         };
 
-        // Move seller manually in active queue
         window.moveInQueue = async function(staffId, direction) {
             const activeQueue = window.appState.staff
                 .filter(s => s.onShift)
@@ -750,7 +692,6 @@
             }
         };
 
-        // Add event to history log
         async function addLogEvent(type, text, author) {
             const newLog = {
                 type,
@@ -770,7 +711,6 @@
             }
         }
 
-        // --- SALE SUBMISSION --- //
         window.openSaleModal = function(staffId) {
             const staff = window.appState.staff.find(s => s.id === staffId);
             if (!staff) return;
@@ -810,7 +750,6 @@
             showToast(`Продажа зафиксирована! ${staff.name} уходит в конец очереди.`);
         };
 
-        // --- BOOKINGS SUBMISSION --- //
         window.openBookingModal = function() {
             const select = document.getElementById('bookingConsultantSelect');
             select.innerHTML = '<option value="Любой свободен">-- Без назначения (Любой свободен) --</option>';
@@ -837,7 +776,7 @@
             const newBooking = {
                 clientName,
                 phone: phone || 'Телефон не указан',
-                product: product || 'Консультация по технике',
+                product: product || 'Консультация',
                 consultant: consultant || 'Любой свободен',
                 time: time || 'В ближайшее время',
                 status: 'pending',
@@ -854,9 +793,9 @@
                 updateBookingBadge();
             }
 
-            await addLogEvent('booking', `Бронь: ${clientName} — ${product} (Продавец: ${consultant})`, 'Клиент');
+            await addLogEvent('booking', `Бронь: ${clientName} — ${product} (${consultant})`, 'Клиент');
             closeModal('modalBooking');
-            showToast("Бронь клиента добавлена!");
+            showToast("Бронь добавлена!");
         };
 
         window.updateBookingStatus = async function(bookingId, status) {
@@ -869,7 +808,7 @@
                 saveLocalState();
                 renderBookingsView();
             }
-            showToast(status === 'completed' ? "Бронь отмечена как Обслужена" : "Бронь отменена");
+            showToast(status === 'completed' ? "Бронь отмечена как Продано" : "Бронь отменена");
         };
 
         window.deleteBooking = async function(bookingId) {
@@ -885,7 +824,6 @@
             showToast("Бронь удалена");
         };
 
-        // --- STAFF ADDITION WITH DUP VALIDATION --- //
         window.openAddStaffModal = function() {
             document.getElementById('addStaffForm').reset();
             document.getElementById('modalAddStaff').classList.remove('hidden');
@@ -899,12 +837,11 @@
 
             if (!name) return;
 
-            // STRICT DUP CHECK (case-insensitive, trimmed)
             const normalizedNewName = name.toLowerCase();
             const exists = window.appState.staff.some(s => (s.name || '').trim().toLowerCase() === normalizedNewName);
 
             if (exists) {
-                showToast(`⚠️ Сотрудник с именем "${name}" уже есть в списке!`, 'error');
+                showToast(`⚠️ Сотрудник "${name}" уже существует!`, 'error');
                 return;
             }
 
@@ -950,8 +887,6 @@
             showToast(`${staff.name} удален(а) из списка`);
         };
 
-        // --- RENDER FUNCTIONS --- //
-
         function renderAllViews() {
             renderQueueView();
             renderBookingsView();
@@ -960,13 +895,11 @@
             updateShiftCount();
         }
 
-        // 1. Render Active Queue View
         function renderQueueView() {
             const spotlightContainer = document.getElementById('spotlightEmployeeContainer');
             const queueList = document.getElementById('queueList');
             const emptyNotice = document.getElementById('emptyQueueNotice');
 
-            // Get active employees on shift
             const activeOnShift = window.appState.staff
                 .filter(s => s.onShift)
                 .sort((a, b) => (a.order || 0) - (b.order || 0));
@@ -980,15 +913,13 @@
                 emptyNotice.classList.add('hidden');
             }
 
-            // Find current active spotlight seller
             let spotlightIndex = activeOnShift.findIndex(s => s.status !== 'break');
-            if (spotlightIndex === -1) spotlightIndex = 0; // If all on break, pick first
+            if (spotlightIndex === -1) spotlightIndex = 0;
 
             const current = activeOnShift[spotlightIndex];
             const isConsulting = current.status === 'consulting';
             const isBreak = current.status === 'break';
 
-            // Render Current Spotlight Card (#1 in Queue)
             spotlightContainer.innerHTML = `
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div class="flex items-center gap-3.5">
@@ -1023,7 +954,6 @@
                     </div>
                 </div>
 
-                <!-- SPOTLIGHT ACTION BUTTONS -->
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-4 pt-3.5 border-t border-[#2A2A2A]">
                     <button onclick="openSaleModal('${current.id}')" class="bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white py-2.5 px-3 rounded-xl font-bold text-xs transition flex items-center justify-center gap-2 shadow-lg">
                         <i class="fa-solid fa-cart-shopping"></i>
@@ -1047,7 +977,6 @@
                 </div>
             `;
 
-            // Render rest of queue
             const remaining = activeOnShift.filter(s => s.id !== current.id);
             if (remaining.length === 0) {
                 queueList.innerHTML = `
@@ -1083,10 +1012,10 @@
                         </div>
 
                         <div class="flex items-center gap-1">
-                            <button onclick="moveInQueue('${staff.id}', -1)" title="Поднять выше" class="p-1.5 text-gray-400 hover:text-white hover:bg-[#2A2A2A] rounded-lg transition">
+                            <button onclick="moveInQueue('${staff.id}', -1)" title="Вверх" class="p-1.5 text-gray-400 hover:text-white hover:bg-[#2A2A2A] rounded-lg transition">
                                 <i class="fa-solid fa-chevron-up text-xs"></i>
                             </button>
-                            <button onclick="moveInQueue('${staff.id}', 1)" title="Опустить ниже" class="p-1.5 text-gray-400 hover:text-white hover:bg-[#2A2A2A] rounded-lg transition">
+                            <button onclick="moveInQueue('${staff.id}', 1)" title="Вниз" class="p-1.5 text-gray-400 hover:text-white hover:bg-[#2A2A2A] rounded-lg transition">
                                 <i class="fa-solid fa-chevron-down text-xs"></i>
                             </button>
                             <button onclick="rotateToBack('${staff.id}')" title="В конец очереди" class="p-1.5 text-gray-400 hover:text-orange-400 hover:bg-[#2A2A2A] rounded-lg transition">
@@ -1100,7 +1029,6 @@
             queueList.innerHTML = html;
         }
 
-        // 2. Render Bookings View
         function renderBookingsView() {
             const container = document.getElementById('bookingsList');
             const bookings = window.appState.bookings;
@@ -1160,7 +1088,6 @@
             container.innerHTML = html;
         }
 
-        // 3. Render Logs View
         function renderLogsView() {
             const container = document.getElementById('historyLogsList');
             const filter = window.appState.logFilter;
@@ -1202,13 +1129,11 @@
             container.innerHTML = html;
         }
 
-        // 4. Render Staff Management View
         function renderStaffView() {
             const containerSellers = document.getElementById('staffGridSellers');
             const containerManagement = document.getElementById('staffGridManagement');
 
             const staffList = window.appState.staff;
-
             const sellers = staffList.filter(s => s.category !== 'management');
             const management = staffList.filter(s => s.category === 'management');
 
@@ -1244,7 +1169,6 @@
             `).join('');
         }
 
-        // Timer Loop for Long Consultations
         function startTimerLoop() {
             setInterval(() => {
                 const timerEl = document.getElementById('consultTimerDisplay');
@@ -1260,7 +1184,6 @@
             }, 1000);
         }
 
-        // UI Helpers
         function updateShiftCount() {
             const activeCount = window.appState.staff.filter(s => s.onShift).length;
             const badge = document.getElementById('activeShiftCount');
